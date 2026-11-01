@@ -1,4 +1,4 @@
-import { advance, collect, freshGame, purchaseEquipment, purchaseResearch, purchaseSkill, purchaseUpgrade } from "./core/engine.js";
+import { advance, collect, freshGame, purchaseEquipment, purchaseResearch, purchaseSkill, purchaseUpgrade, reincarnate } from "./core/engine.js";
 import { loadGame, saveGame } from "./core/storage.js";
 import { render, setSaveStatus, setupTabs } from "./ui.js";
 
@@ -32,6 +32,7 @@ document.getElementById("skill-list").addEventListener("click", event => {
   state = purchaseSkill(state, button.dataset.skill);
   render(state); persist();
 });
+document.getElementById("reincarnate-button").addEventListener("click", () => { state = reincarnate(state); render(state); persist(); });
 setupTabs(); render(state); persist();
 if (loaded.recovered) setSaveStatus("バックアップから復旧");
 if (loaded.state) setSaveStatus("セーブデータを読み込みました");

@@ -1,11 +1,12 @@
 import { from } from "./decimal.js";
 import { EQUIPMENT, STARTING_AETHER } from "./economy.js";
 
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 export function createInitialState(now = Date.now()) {
   const equipment = Object.fromEntries(EQUIPMENT.map((item, index) => [item.id, { owned: 0, upgradeLevel: 0, unlocked: index === 0 }]));
   return {
     schemaVersion: SAVE_VERSION, createdAt: now, lastTickAt: now, totalPlaySeconds: 0, research: [], skills: [],
+    runEarned: from(0), reincarnationShards: 0, reincarnations: 0,
     currencies: { aether: STARTING_AETHER }, totalEarned: STARTING_AETHER, clicks: 0,
     equipment, unlocked: { equipment: ["autoClicker"] }
   };
@@ -27,7 +28,8 @@ export function normalizeState(raw, now = Date.now()) {
   return {
     ...initial, ...raw, schemaVersion: SAVE_VERSION,
     currencies: { aether: from(raw.currencies?.aether ?? 0) },
-    totalEarned: from(raw.totalEarned ?? 0),
+    totalEarned: from(raw.totalEarned ?? 0), runEarned: from(raw.runEarned ?? raw.totalEarned ?? 0),
+    reincarnationShards: Math.max(0, Math.floor(Number(raw.reincarnationShards) || 0)), reincarnations: Math.max(0, Math.floor(Number(raw.reincarnations) || 0)),
     equipment, research: Array.isArray(raw.research) ? raw.research.filter(x => typeof x === "string") : [],
     skills: Array.isArray(raw.skills) ? raw.skills.filter(x => typeof x === "string") : [],
     unlocked: { equipment: unlockedIds },

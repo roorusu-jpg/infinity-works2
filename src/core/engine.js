@@ -1,8 +1,23 @@
-import { add, compare, from, multiply } from "./decimal.js";
+import { add, compare, from, multiply, toNumber } from "./decimal.js";
 import { addCurrency, buy, EQUIPMENT, equipmentCost, equipmentProduction, productionForSeconds, upgradeCost, RESEARCH, SKILLS } from "./economy.js";
 import { createInitialState } from "./state.js";
 
 export const OFFLINE_CAP_SECONDS = 8 * 60 * 60;
+export const REINCARNATION_REQUIREMENT = from("1e6");
+export function getReincarnationReward(state) {
+  if (compare(state.runEarned, REINCARNATION_REQUIREMENT) < 0) return 0;
+  const value = Math.sqrt(toNumber(state.runEarned) / 1e6);
+  return Number.isFinite(value) ? Math.max(1, Math.floor(value)) : Number.MAX_SAFE_INTEGER;
+}
+export function canReincarnate(state) { return getReincarnationReward(state) > 0; }
+export function reincarnate(state) {
+  const reward = getReincarnationReward(state);
+  if (reward < 1) return state;
+  const equipment = Object.fromEntries(EQUIPMENT.map((item, index) => [item.id, { owned: 0, upgradeLevel: 0, unlocked: index === 0 }]));
+  return { ...state, currencies: { ...state.currencies, aether: from(0) }, equipment,
+    unlocked: { equipment: [EQUIPMENT[0].id] }, runEarned: from(0),
+    reincarnationShards: state.reincarnationShards + reward, reincarnations: state.reincarnations + 1 };
+}
 export function getSkillPoints(state) {
   const earned = Math.max(0, Math.floor(Number(state.totalEarned.m) * 10 ** Number(state.totalEarned.e) / 1000));
   return Math.max(0, earned - state.skills.length);
@@ -25,7 +40,7 @@ export function purchaseResearch(state, id) {
 }
 export function collect(state) {
   const gain = getClickGain(state);
-  return { ...state, currencies: { ...state.currencies, aether: addCurrency(state.currencies.aether, gain) }, totalEarned: add(state.totalEarned, gain), clicks: state.clicks + 1 };
+  return { ...state, currencies: { ...state.currencies, aether: addCurrency(state.currencies.aether, gain) }, totalEarned: add(state.totalEarned, gain), runEarned: add(state.runEarned ?? from(0), gain), clicks: state.clicks + 1 };
 }
 export function getEquipmentCost(state, id) {
   const def = EQUIPMENT.find(item => item.id === id), item = state.equipment[id];
@@ -59,11 +74,11 @@ export function purchaseUpgrade(state, id) {
 export function getProduction(state) {
   const base = EQUIPMENT.reduce((sum, def) => add(sum, equipmentProduction(def, state.equipment[def.id].owned, state.equipment[def.id].upgradeLevel)), from(0));
   const factor = (state.research.includes("efficientMotors") ? 1.25 : 1) * (state.research.includes("etherAnalysis") ? 1.5 : 1) * (state.skills.includes("steadyFlow") ? 1.25 : 1) * (state.skills.includes("deepResonance") ? 1.5 : 1);
-  return multiply(base, from(factor));
+  return multiply(multiply(base, from(factor)), from(1 + state.reincarnationShards * 0.1));
 }
 export function advance(state, now = Date.now(), { offline = false } = {}) {
   const elapsed = Math.max(0, (now - state.lastTickAt) / 1000), seconds = offline ? Math.min(elapsed, OFFLINE_CAP_SECONDS) : elapsed;
   const production = productionForSeconds(getProduction(state), seconds);
-  return { ...state, currencies: { ...state.currencies, aether: add(state.currencies.aether, production) }, totalEarned: add(state.totalEarned, production), totalPlaySeconds: state.totalPlaySeconds + seconds, lastTickAt: now };
+  return { ...state, currencies: { ...state.currencies, aether: add(state.currencies.aether, production) }, totalEarned: add(state.totalEarned, production), runEarned: add(state.runEarned ?? from(0), production), totalPlaySeconds: state.totalPlaySeconds + seconds, lastTickAt: now };
 }
 export function freshGame(now = Date.now()) { return createInitialState(now); }

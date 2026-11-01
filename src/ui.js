@@ -1,5 +1,5 @@
 import { format, compare, from } from "./core/decimal.js";
-import { getClickGain, getEquipmentCost, getProduction, getSkillPoints, getUpgradeCost } from "./core/engine.js";
+import { getClickGain, getEquipmentCost, getProduction, getSkillPoints, getUpgradeCost, getReincarnationReward, canReincarnate } from "./core/engine.js";
 import { EQUIPMENT, RESEARCH, SKILLS } from "./core/economy.js";
 
 const $ = id => document.getElementById(id);
@@ -24,6 +24,13 @@ export function render(state) {
     const status = done ? "研究完了" : !unlocked ? "条件未達成" : affordable ? "研究可能" : "エーテル不足";
     return `<article class="equipment-card"><div class="equipment-icon">⌬</div><div class="equipment-info"><span class="eyebrow">RESEARCH</span><h2>${item.name}</h2><p>${item.description}</p><div class="equipment-stats"><span>効果 <b>${item.effect}</b></span><span>状態 <b>${status}</b></span></div></div><div class="equipment-buy"><strong>${item.cost.toLocaleString("ja-JP")} AE</strong><button data-research="${item.id}" ${done || !unlocked || !affordable ? "disabled" : ""}>${done ? "完了" : "研究する"}</button></div></article>`;
   }).join("");
+  const reward = getReincarnationReward(state);
+  $("reincarnation-shards").textContent = state.reincarnationShards.toLocaleString("ja-JP");
+  $("reincarnation-count").textContent = state.reincarnations.toLocaleString("ja-JP");
+  $("reincarnation-reward").textContent = reward.toLocaleString("ja-JP");
+  $("reincarnation-progress").textContent = `今回の累計獲得 ${format(state.runEarned)} / 必要量 1.00e6 AE`;
+  $("reincarnate-button").disabled = !canReincarnate(state);
+  $("reincarnate-button").textContent = canReincarnate(state) ? `転生して ${reward} 個獲得` : "転生条件を満たしていません";
   const points = getSkillPoints(state);
   $("skill-points").textContent = points.toLocaleString("ja-JP");
   $("skill-progress").textContent = `累計獲得 ${format(state.totalEarned)} AE / 次のポイント ${format(from((Math.floor(Number(state.totalEarned.m) * 10 ** Number(state.totalEarned.e) / 1000) + 1) * 1000))} AE`;

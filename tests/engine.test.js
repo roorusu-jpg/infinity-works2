@@ -68,3 +68,26 @@ test("skill prerequisites and point balance are enforced", () => {
   s=purchaseSkill(s,"keenHands"); assert.equal(getSkillPoints(s),0);
   assert.equal(purchaseSkill(s,"steadyFlow"),s);
 });
+
+import { canReincarnate, getReincarnationReward, reincarnate } from "../src/core/engine.js";
+test("reincarnation unlocks at one million run-earned ether and grants shards", () => {
+  let s=freshGame(0);
+  s={...s,runEarned:from("1e6"),totalEarned:from("1e6"),currencies:{aether:from("1e6")},equipment:{...s.equipment,autoClicker:{owned:10,upgradeLevel:3,unlocked:true}},research:["focusedCollection"],skills:["keenHands"]};
+  assert.equal(canReincarnate(s),true);
+  assert.equal(getReincarnationReward(s),1);
+  const next=reincarnate(s);
+  assert.equal(next.reincarnationShards,1);
+  assert.equal(next.reincarnations,1);
+  assert.equal(compare(next.currencies.aether,0),0);
+  assert.equal(next.equipment.autoClicker.owned,0);
+  assert.deepEqual(next.research,["focusedCollection"]);
+  assert.deepEqual(next.skills,["keenHands"]);
+  assert.equal(compare(next.runEarned,0),0);
+});
+test("reincarnation reward scales with current run and cannot be claimed twice", () => {
+  let s=freshGame(0); s={...s,runEarned:from("4e6")};
+  assert.equal(getReincarnationReward(s),2);
+  s=reincarnate(s);
+  assert.equal(getReincarnationReward(s),0);
+  assert.equal(reincarnate(s),s);
+});
