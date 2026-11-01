@@ -28,7 +28,7 @@ export function normalizeState(raw, now = Date.now()) {
   return {
     ...initial, ...raw, schemaVersion: SAVE_VERSION,
     currencies: { aether: from(raw.currencies?.aether ?? 0) },
-    totalEarned: from(raw.totalEarned ?? 0), runEarned: from(raw.runEarned ?? raw.totalEarned ?? 0),
+    totalEarned: from(raw.totalEarned ?? 0), runEarned: from(raw.runEarned ?? raw.currencies?.aether ?? 0),
     reincarnationShards: Math.max(0, Math.floor(Number(raw.reincarnationShards) || 0)), reincarnations: Math.max(0, Math.floor(Number(raw.reincarnations) || 0)),
     equipment, research: Array.isArray(raw.research) ? raw.research.filter(x => typeof x === "string") : [],
     skills: Array.isArray(raw.skills) ? raw.skills.filter(x => typeof x === "string") : [],
