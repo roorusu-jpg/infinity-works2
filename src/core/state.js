@@ -14,7 +14,7 @@ export function createInitialState(now = Date.now()) {
 export function normalizeState(raw, now = Date.now()) {
   if (!raw || typeof raw !== "object") throw new TypeError("Save data must be an object.");
   const initial = createInitialState(now);
-  if (![1, 2, 3, SAVE_VERSION].includes(raw.schemaVersion)) throw new Error("Unsupported save version.");
+  if (![1, 2, 3, 4, SAVE_VERSION].includes(raw.schemaVersion)) throw new Error("Unsupported save version.");
   const oldEquipment = raw.equipment || {};
   const equipment = Object.fromEntries(EQUIPMENT.map((item, index) => {
     const saved = oldEquipment[item.id] || (index === 0 ? oldEquipment.autoClicker : null) || {};

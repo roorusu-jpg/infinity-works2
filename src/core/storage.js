@@ -31,6 +31,6 @@ export function exportBackup(state) {
 
 export function importBackup(text, now = Date.now()) {
   const data = JSON.parse(text);
-  if (data.app !== "infinity-works" || ![1, SAVE_VERSION].includes(data.schemaVersion)) throw new Error("This backup is not compatible with this version.");
+  if (data.app !== "infinity-works" || ![1, 2, 3, 4, SAVE_VERSION].includes(data.schemaVersion)) throw new Error("This backup is not compatible with this version.");
   return normalizeState(data.state, now);
 }
